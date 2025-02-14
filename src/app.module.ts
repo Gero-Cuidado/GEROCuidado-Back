@@ -1,4 +1,4 @@
-import { Module, OnApplicationBootstrap } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
@@ -6,25 +6,30 @@ import { ElderlyModule } from './elderly/elderly.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { EventsModule } from './events/events.module';
 import { RoutinesModule } from './routines/routines.module';
-import { Connection } from 'typeorm';
-// import { NotificationsModule } from './notifications/notifications.module';
-// import { UploadModule } from './upload/upload.module';
 import { AuthModule } from './auth/auth.module';
 
-@Module({ 
+@Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.POSTGRES_HOST,
-      port: parseInt(<string>process.env.POSTGRES_PORT),
-      username: process.env.POSTGRES_USER,
-      password: process.env.POSTGRES_PASSWORD,
-      database: process.env.POSTGRES_DATABASE,
-      entities: [
-        __dirname + '/**/*.entity{.ts,.js}', // Carrega todas as entidades automaticamente
-      ],
-      synchronize: true, // Cria automaticamente as tabelas (apenas para desenvolvimento)
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('POSTGRES_HOST'),
+        port: configService.get<number>('POSTGRES_PORT'),
+        username: configService.get<string>('POSTGRES_USER'),
+        password: configService.get<string>('POSTGRES_PASSWORD'),
+        database: configService.get<string>('POSTGRES_DATABASE'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        synchronize: true, // Cuidado: use apenas em desenvolvimento
+        ssl: true, // Habilita SSL
+        extra: {
+          ssl: {
+            rejectUnauthorized: false, // Ignora a verificação do certificado (necessário para Render)
+          },
+        },
+      }),
     }),
     UsersModule,
     ElderlyModule,
@@ -32,17 +37,8 @@ import { AuthModule } from './auth/auth.module';
     MetricsModule,
     EventsModule,
     RoutinesModule,
-    // NotificationsModule,
-    // UploadModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule implements OnApplicationBootstrap {
-  constructor(private readonly connection: Connection) {}
-
-  onApplicationBootstrap() {
-    console.log('Conexão com o banco de dados estabelecida com sucesso!');
-    console.log('Banco de dados:', this.connection.options.database);
-  }
-}
+export class AppModule {}
