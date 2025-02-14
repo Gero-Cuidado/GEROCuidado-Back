@@ -1,5 +1,5 @@
 import { Module, OnApplicationBootstrap } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { ElderlyModule } from './elderly/elderly.module';
