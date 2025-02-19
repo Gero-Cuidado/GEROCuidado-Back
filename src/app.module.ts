@@ -23,12 +23,12 @@ import { AuthModule } from './auth/auth.module';
         database: configService.get<string>('POSTGRES_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true, // Cuidado: use apenas em desenvolvimento
-        ssl: true, // Habilita SSL
-        extra: {
-          ssl: {
-            rejectUnauthorized: false, // Ignora a verificação do certificado (necessário para Render)
-          },
-        },
+        ssl: false, // Habilitar ao usar o render SSL
+        // extra: {
+        //   ssl: {
+        //     rejectUnauthorized: false, // Ignora a verificação do certificado (necessário para Render)
+        //   },
+        // },
       }),
     }),
     UsersModule,
