@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Connection } from 'typeorm';
 import { UsersModule } from './users/users.module';
 import { ElderlyModule } from './elderly/elderly.module';
 import { MetricsModule } from './metrics/metrics.module';
@@ -13,7 +14,6 @@ import { AuthModule } from './auth/auth.module';
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         host: configService.get<string>('POSTGRES_HOST'),
@@ -22,14 +22,12 @@ import { AuthModule } from './auth/auth.module';
         password: configService.get<string>('POSTGRES_PASSWORD'),
         database: configService.get<string>('POSTGRES_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, // Cuidado: use apenas em desenvolvimento
-        ssl: true, // Habilitar ao usar o render SSL
-        extra: {
-          ssl: {
-            rejectUnauthorized: true, // Ignora a verificação do certificado (necessário para Render)
-          },
+        synchronize: true, // Apenas para desenvolvimento
+        ssl: {
+          rejectUnauthorized: false, // Ignora a verificação do certificado SSL
         },
       }),
+      inject: [ConfigService],
     }),
     UsersModule,
     ElderlyModule,
@@ -41,4 +39,11 @@ import { AuthModule } from './auth/auth.module';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements OnApplicationBootstrap {
+  constructor(private readonly connection: Connection) {}
+
+  onApplicationBootstrap() {
+    console.log('Conexão com o banco de dados estabelecida com sucesso!');
+    console.log('Banco de dados:', this.connection.options.database);
+  }
+}
